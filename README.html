@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="generator" content=
+"HTML Tidy for Linux/x86 (vers 1 September 2005), see www.w3.org" />
+<link rel="stylesheet" href="/style.css" type="text/css" />
+<title>random-generator</title>
+</head>
+<body>
+<h1>Purpose</h1>
+<p><code>random</code> generates series of unique random integers
+in an arbitrary range. More specifically it means that it generates
+an ordered set of integers which is guaranteed not to contain any
+number more than once. It makes use of the GMP Library (The GNU MP
+Bignum Library) for generating integers of any imaginable order
+(given the limitations on memory, processing power, the shell's
+ability to provide long enough arguments, the user's ability to
+type them etc.).</p>
+<h1>Operation</h1>
+<p>By default the program generates one number between 1 and
+100.</p>
+<p>It can take a number of options to control the size and range of
+the generated set:</p>
+<pre>
+  -l, --lower=&lt;number&gt;     Lower bound (inclusive). Default is 1.
+  -u, --upper=&lt;number&gt;     Upper bound (inclusive). Default is 100.
+  -c, --count=&lt;number&gt;     Generate this many unique numbers.
+</pre>
+<p>The lower and upper bounds can accept negative numbers (although
+the lower bound must always be lower than the upper).</p>
+<p>There is a limit on the size of the set (currently set to
+<strong>UINT_MAX</strong> from your system's
+'<code>/usr/include/limits.h</code>') which is primarily designed
+for simplicity of implementation. Generating very large sets of
+random numbers is pretty silly anyway, and takes a lot of time and
+memory, so if you want to, you can give it a go to generate a set
+of 20 000 000 numbers, but don't come crying and say I didn't warn
+you when your swap space has run out. There's nothing stopping you
+from shooting yourself in the foot. And there shouldn't be.</p>
+<h1>Humorously Big Numbers</h1>
+<p>You may find that you want to generate extremely big random
+numbers, and that the argument list becomes too long for the system
+to handle. In that case you can read values from a file with the
+<code>-f &lt;file&gt;</code> option. The file shall contain only
+two values, separated by a space: the lower and the upper bound.
+Again, these may be negative values. You can also read from
+<code>stdin</code>, of course.</p>
+<h1>Excuse</h1>
+<p>This was written mostly for learning the GNU MP library and for
+the fun of it. Hopefully you will find this software useful and a
+maybe even slightly fun. I used it's predecessor for generating
+image indexes in a shell script on a web server once. (It could
+only generate measly standard <code>int</code>s though). And if you
+make a Lotto row with the help of this program I wish you the best
+of luck trying to win.</p>
+<h1>Disclaimer</h1>
+<p>This software may contain bugs. If you find one, please notify
+me. Also, if you have suggestions, improvements or comments, I'd
+like to hear about it. Also, it uses the popt library, which is
+great. Except for one brain hemorrhage: The automated help it
+generates uses '<code>-? | --help</code>' as an option. I didn't
+bother to plug that hole. Use <code>--help</code> if you want to
+see the options. Also, the software lacks test cases and QA, so you
+might not want to rely on this particular piece of software to
+drive trains, planes or automobiles.</p>
+<h1>Thank You</h1>
+<p>The good people at <a href="http://swox.com">swox.com</a> for
+writing and maintaining the GMP library.</p>
+<p>The GNU people and Donald Knuth for the binary tree
+implementation used herein.</p>
+<p>Mikael Magnusson (Mikachu) and Erik Waling (ddl) for suggestions
+and improvements (generate excluded numbers when the size of the
+set is more than half the range (Mikachu); reading parameters from
+a file (Mikachu); reading a random seed (ddl) ).</p>
+<p><em>Pär Karlsson, September 2005</em></p>
+</body>
+</html>
