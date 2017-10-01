@@ -1,6 +1,8 @@
-PURPOSE
+# random
 
-random generates series of unique random integers in an arbitrary range.
+## PURPOSE
+
+__random__ generates series of unique random integers in an arbitrary range.
 More specifically it means that it generates an ordered set of integers
 which is guaranteed not to contain any number more than once.
 It makes use of the GMP Library (The GNU MP Bignum Library) for generating
@@ -9,16 +11,16 @@ power, the shell's ability to provide long enough arguments, the user's
 ability to type them etc.).
 
 
-OPERATION
+## OPERATION
 
 By default the program generates one number between 1 and 100.
 
 It can take a number of options to control the size and range of the generated
 set:
 
-  -l, --lower=<number>     Lower bound (inclusive). Default is 1.
-  -u, --upper=<number>     Upper bound (inclusive). Default is 100.
-  -c, --count=<number>     Generate this many unique numbers.
+    -l, --lower=<number>     Lower bound (inclusive). Default is 1.
+    -u, --upper=<number>     Upper bound (inclusive). Default is 100.
+    -c, --count=<number>     Generate this many unique numbers.
 
 The lower and upper bounds can accept negative numbers (although the lower
 bound must always be lower than the upper).
@@ -33,7 +35,7 @@ nothing stopping you from shooting yourself in the foot. And there shouldn't
 be.
 
 
-HUMOROUSLY BIG NUMBERS
+## HUMOROUSLY BIG NUMBERS
 
 You may find that you want to generate extremely big random numbers, and
 that the argument list becomes too long for the system to handle. In that
@@ -43,7 +45,7 @@ bound. Again, these may be negative values. You can also read from stdin,
 of course.
 
 
-EXCUSE
+## EXCUSE
 
 This was written mostly for learning the GNU MP library and for the fun of it.
 Hopefully you will find this software useful and a maybe even slightly fun.
@@ -53,7 +55,7 @@ And if you make a Lotto row with the help of this program I wish you the best
 of luck trying to win.
 
 
-DISCLAIMER
+## DISCLAIMER
 
 This software may contain bugs. If you find one, please notify me. Also, if
 you have suggestions, improvements or comments, I'd like to hear about it.
@@ -64,7 +66,7 @@ Also, the software lacks test cases and QA, so you might not want to rely on
 this particular piece of software to drive trains, planes or automobiles.
 
 
-THANK YOU
+## THANK YOU
 
 The good people writing and maintaining the GMP library.
 
