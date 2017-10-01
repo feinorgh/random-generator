@@ -164,7 +164,7 @@ generateSeries(size_t size_of_set, mpz_t low, mpz_t high)
 
         twalk(root, treeaction);
         tdestroy(root, clear_number);
-        if (number) {
+        if (number != NULL) {
             free(number);
         }
     }
@@ -320,6 +320,7 @@ parseOptions(int argc, const char **argv)
         size_of_set = mpz_get_ui(argsz);
     }
     mpz_clear(argsz);
+    mpz_clear(range);
 
     if ( c < -1 ) {
         fprintf(stderr, "%s: %s\n",
