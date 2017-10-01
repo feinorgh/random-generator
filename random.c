@@ -1,7 +1,7 @@
 /*
  * random generates series of unique random integers in an arbitrary range
  *
- * Copyright (C) 2005, 2017  P�r Karlsson <feinorgh@gmail.com>
+ * Copyright (C) 2005, 2017  Pär Karlsson <feinorgh@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ int show_version = 0;
 int userandom = 0;
 size_t size_of_set = 0;
 mpz_t range, low, high;
-const char *version = "1.0";
+const char *version = "1.1";
 
 void
 usage(poptContext optCon, int exitcode, char *error, char *addl)
@@ -54,7 +54,7 @@ void
 print_version()
 {
     printf("random version %s\n", version);
-    printf("Copyright (C) 2005  P. Karlsson\n");
+    printf("Copyright (C) 2005, 2017  Pär Karlsson <feinorgh@gmail.com>\n");
     printf("This is free software, and you are welcome to redistribute it "
            "under\ncertain conditions; please read the accompanying LICENSE "
            "file for details.\n");
