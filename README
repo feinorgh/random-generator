@@ -66,12 +66,14 @@ this particular piece of software to drive trains, planes or automobiles.
 
 THANK YOU
 
-The good people at swox.com for writing and maintaining the GMP library.
+The good people writing and maintaining the GMP library.
+
 The GNU people and Donald Knuth for the binary tree implementation used
 herein.
+
 Mikael Magnusson (Mikachu) and Erik Waling (ddl) for suggestions and
 improvements (generate excluded numbers when the size of the set is more than
 half the range (Mikachu); reading parameters from a file (Mikachu); reading
 a random seed (ddl) ).
 
-Pär Karlsson, September 2005
+Pär Karlsson, September 2017
