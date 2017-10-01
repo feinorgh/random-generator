@@ -75,13 +75,13 @@ treeaction(const void *nodep, const VISIT which, const int depth)
         break;
     case postorder:
         datap = *(mpz_t **)nodep;
-        printf("%s\n", mpz_get_str(NULL, 10, *(mpz_t *)datap));
+        gmp_printf("%Zd\n", *(mpz_t *)datap);
         break;
     case endorder:
         break;
     case leaf:
         datap = *(mpz_t **)nodep;
-        printf("%s\n", mpz_get_str(NULL, 10, *(mpz_t *)datap));
+        gmp_printf("%Zd\n", *(mpz_t *)datap);
         break;
     }
 }
@@ -142,9 +142,14 @@ generateSeries(size_t size_of_set, mpz_t low, mpz_t high)
         mpz_set(tmp, low);
         while (mpz_cmp(tmp, high)) {
             if (tfind((void *)tmp, &root, compare) == NULL) {
-                printf("%s\n", mpz_get_str(NULL, 10, tmp));
+                /* printf("%s\n", mpz_get_str(NULL, 10, tmp)); */
+                gmp_printf("%Zd\n", tmp);
             }
             mpz_add_ui(tmp, tmp, 1);
+        }
+        tdestroy(root, clear_number);
+        if (number != NULL) {
+            free(number);
         }
     } else {
         mpz_t *number = malloc(sizeof(mpz_t) * size_of_set);
@@ -320,7 +325,6 @@ parseOptions(int argc, const char **argv)
         size_of_set = mpz_get_ui(argsz);
     }
     mpz_clear(argsz);
-    mpz_clear(range);
 
     if ( c < -1 ) {
         fprintf(stderr, "%s: %s\n",
@@ -346,6 +350,7 @@ main(int argc, const char **argv)
 
     mpz_clear(low);
     mpz_clear(high);
+    mpz_clear(range);
     gmp_randclear(state);
     return 0;
 }
