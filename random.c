@@ -267,14 +267,14 @@ parseOptions(int argc, const char **argv)
         }
     }
 
-    char **buf1, **buf2;
+    char *buf1, *buf2;
     if (paramfile) {
         FILE *fp = fopen(paramfile, "r");
         if (fp == NULL) {
             fprintf(stderr, "%s: %s\n", paramfile, strerror(errno));
             exit(1);
         }
-        int fields_parsed = gmp_fscanf(fp, "%as %as", &buf1, &buf2);
+        int fields_parsed = fscanf(fp, "%ms %ms\n", &buf1, &buf2);
         if (fields_parsed < 2) {
             fprintf(stderr, "Error: Could not parse contents of '%s'.\n",
                     paramfile);
