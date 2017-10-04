@@ -111,7 +111,7 @@ treeaction(const void *nodep, const VISIT which, const int depth)
 }
 
 void
-randomInteger(mpz_t result, const mpz_t low, const mpz_t high)
+random_integer(mpz_t result, const mpz_t low, const mpz_t high)
 {
     mpz_sub(range, high, low);
     mpz_add_ui(range, range, 1);
@@ -125,7 +125,7 @@ compare(const void *a, const void *b) {
 }
 
 void
-generateSeries(size_t size_of_set, mpz_t low, mpz_t high)
+generate_series(size_t size_of_set, mpz_t low, mpz_t high)
 {
     char *suffix = "s";
     if (verbose) {
@@ -159,7 +159,7 @@ generateSeries(size_t size_of_set, mpz_t low, mpz_t high)
         for ( i = 0; i < invsize; i++ ) {
             mpz_init(number[i]);
             do {
-                randomInteger(number[i], low, high);
+                random_integer(number[i], low, high);
             } while (tfind((void *)number[i], &root, compare) != NULL);
             tsearch((void *)number[i], &root, compare);
         }
@@ -186,7 +186,7 @@ generateSeries(size_t size_of_set, mpz_t low, mpz_t high)
         for ( i = 0; i < size_of_set; i++ ) {
             mpz_init(number[i]);
             do {
-                randomInteger(number[i], low, high);
+                random_integer(number[i], low, high);
             } while (tfind((void *)number[i], &root, compare) != NULL);
             tsearch((void *)number[i], &root, compare);
         }
@@ -201,7 +201,7 @@ generateSeries(size_t size_of_set, mpz_t low, mpz_t high)
 }
 
 int
-initRandom(void)
+init_random(void)
 {
     extern gmp_randstate_t state;
     gmp_randinit_default(state);
@@ -260,7 +260,7 @@ read_params_from_file(const char *optarg) {
 }
 
 int
-parseOptions(int argc, char * const argv[])
+parse_options(int argc, char * const argv[])
 {
     int c;
     mpz_t arg_count;
@@ -369,9 +369,9 @@ main(int argc, const char **argv)
 {
     mpz_init_set_str(low, "1", 10);
     mpz_init_set_str(high, "100", 10);
-    parseOptions(argc, (char * const*)argv);
-    initRandom();
-    generateSeries(size_of_set, low, high);
+    parse_options(argc, (char * const*)argv);
+    init_random();
+    generate_series(size_of_set, low, high);
     gmp_randclear(state);
     cleanup();
     return 0;
