@@ -36,7 +36,6 @@
 
 gmp_randstate_t state;
 int verbose = 0;
-int show_version = 0;
 int userandom = 0;
 size_t size_of_set = 1;
 mpz_t range, low, high;
