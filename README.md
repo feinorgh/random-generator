@@ -84,4 +84,4 @@ improvements (generate excluded numbers when the size of the set is more than
 half the range (Mikachu); reading parameters from a file (Mikachu); reading
 a random seed (ddl) ).
 
-Pat Karlsson, September 2017
+Pär Karlsson, September 2017
