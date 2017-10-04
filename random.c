@@ -28,7 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <popt.h>
+#include <getopt.h>
 #include <limits.h>
 #include <search.h>
 #include <errno.h>
@@ -38,17 +38,10 @@ gmp_randstate_t state;
 int verbose = 0;
 int show_version = 0;
 int userandom = 0;
-size_t size_of_set = 0;
+size_t size_of_set = 1;
 mpz_t range, low, high;
-const char *version = "1.1";
+const char *version = "1.2";
 
-void
-usage(poptContext optCon, int exitcode, char *error, char *addl)
-{
-    poptPrintUsage(optCon, stderr, 0);
-    if (error) fprintf(stderr, "%s: %s", error, addl);
-    exit(exitcode);
-}
 
 void
 print_version()
@@ -58,6 +51,38 @@ print_version()
     printf("This is free software, and you are welcome to redistribute it "
            "under\ncertain conditions; please read the accompanying LICENSE "
            "file for details.\n");
+}
+
+void
+print_usage() {
+    char *usage_string = "Usage: random [-vVrh] [-v|--verbose] [-V|--version] [-l|--lower=<number>]\n"
+                         "        [-u|--upper=<number>] [-c|--count=<number>] [-f|--file=<filename>]\n"
+                         "        [-r|--random] [-?|--help] [--usage]\n";
+    printf("%s", usage_string);
+}
+
+void
+print_help() {
+    char *help_string = "Usage: random [OPTION...]\n"
+                        "  -v, --verbose             Be verbose (shows debug info)\n"
+                        "  -V, --version             Show version and copyright information.\n"
+                        "  -l, --lower=<number>      Lower bound (inclusive). Default is 1.\n"
+                        "  -u, --upper=<number>      Upper bound (inclusive). Default is 100.\n"
+                        "  -c, --count=<number>      Generate this many unique numbers.\n"
+                        "  -f, --file=<filename>     Read parameters from this file.\n"
+                        "  -r, --random              Use '/dev/random' instead of '/dev/urandom'\n"
+                        "\n"
+                        "Help options:\n"
+                        "  -h, --help                Show this help message\n"
+                        "      --usage               Display brief usage message\n";
+    printf("%s", help_string);
+}
+
+void
+cleanup() {
+    mpz_clear(low);
+    mpz_clear(high);
+    mpz_clear(range);
 }
 
 void
@@ -206,152 +231,150 @@ initRandom(void)
 }
 
 int
-parseOptions(int argc, const char **argv)
-{
-    char c;
-    poptContext optCon;
-
-    char *lo = NULL;
-    char *hi = NULL;
-    char *sz = NULL;
-    char *paramfile = NULL;
-
-    struct poptOption optionsTable[] = {
-        {   "verbose", 'v', POPT_ARG_NONE, &verbose, 0,
-            "Be verbose (shows debug info)", NULL
-        },
-        {   "version", 'V', POPT_ARG_NONE, &show_version, 0,
-            "Show version and copyright information.", NULL
-        },
-        {   "lower", 'l', POPT_ARG_STRING, &lo, 0,
-            "Lower bound (inclusive). Default is 1.", "<number>"
-        },
-        {   "upper", 'u', POPT_ARG_STRING, &hi, 0,
-            "Upper bound (inclusive). Default is 100.", "<number>"
-        },
-        {   "count", 'c', POPT_ARG_STRING, &sz, 0,
-            "Generate this many unique numbers.", "<number>"
-        },
-        {   "file", 'f', POPT_ARG_STRING, &paramfile, 0,
-            "Read parameters from this file.", "<filename>"
-        },
-        {   "random", 'r', POPT_ARG_NONE, &userandom, 0,
-            "Use '/dev/random' instead of '/dev/urandom'"
-        },
-        POPT_AUTOHELP
-        { NULL, 0, 0, NULL, 0 }
-    };
-
-    optCon = poptGetContext(NULL, argc, argv, optionsTable, 0);
-
-    c = poptGetNextOpt(optCon);
-
-    if (show_version) {
-        print_version();
-        exit(0);
+read_params_from_file(const char *optarg) {
+    if (verbose) {
+        printf("Reading parameters from file '%s'", optarg);
     }
-
-    if (lo) {
-        if (mpz_set_str(low, lo, 10) == -1) {
-            fprintf(stderr, "Error: Could not parse '%s' into a number.\n",
-                    lo);
-            exit(1);
-        }
-    }
-
-    if (hi) {
-        if (mpz_set_str(high, hi, 10) == -1) {
-            fprintf(stderr, "Error: Could not parse '%s' into a number.\n",
-                    hi);
-            exit(1);
-        }
-    }
-
     char *buf1, *buf2;
-    if (paramfile) {
-        FILE *fp = fopen(paramfile, "r");
-        if (fp == NULL) {
-            fprintf(stderr, "%s: %s\n", paramfile, strerror(errno));
-            exit(1);
+    FILE *fp = fopen(optarg, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "%s: %s\n", optarg, strerror(errno));
+        return -1;
+    }
+    int fields_parsed = fscanf(fp, "%ms %ms\n", &buf1, &buf2);
+    if (fields_parsed < 2) {
+        fprintf(stderr, "Error: Could not parse contents of '%s'.\n",
+                optarg);
+        fprintf(stderr, "Got %d fields.\n", fields_parsed);
+    } else {
+        mpz_set_str(low, (char *)buf1, 10);
+        mpz_set_str(high, (char *)buf2, 10);
+    }
+    fclose(fp);
+    if (buf1) {
+        free(buf1);
+    }
+    if (buf2) {
+        free(buf2);
+    }
+    return 1;
+}
+
+int
+parseOptions(int argc, char * const argv[])
+{
+    int c;
+    mpz_t arg_count;
+    mpz_init(arg_count);
+    mpz_set_ui(arg_count, size_of_set);
+
+    while (1) {
+        int option_index = 0;
+        static struct option long_options[] = {
+            {"verbose", no_argument,       0, 'V'},
+            {"version", no_argument,       0, 'v'},
+            {"lower",   required_argument, 0, 'l'},
+            {"upper",   required_argument, 0, 'u'},
+            {"count",   required_argument, 0, 'c'},
+            {"file",    required_argument, 0, 'f'},
+            {"random",  no_argument,       0, 'r'},
+            {"help",    no_argument,       0, 'h'},
+            {"usage",   no_argument,       0, 's'},
+            {0,         0,                 0, 0}
+
+        };
+        c = getopt_long(argc, argv, "vVl:u:c:f:rhu", long_options, &option_index);
+        if ( c == -1 ) {
+            break;
         }
-        int fields_parsed = fscanf(fp, "%ms %ms\n", &buf1, &buf2);
-        if (fields_parsed < 2) {
-            fprintf(stderr, "Error: Could not parse contents of '%s'.\n",
-                    paramfile);
-            fprintf(stderr, "Got %d fields.\n", fields_parsed);
-        } else {
-            mpz_set_str(low, (char *)buf1, 10);
-            mpz_set_str(high, (char *)buf2, 10);
-        }
-        fclose(fp);
-        if (buf1) {
-            free(buf1);
-        }
-        if (buf2) {
-            free(buf2);
+
+        switch (c) {
+        case 0:
+            printf("option %s", long_options[option_index].name);
+            if (optarg)
+                printf(" with arg %s", optarg);
+            printf("\n");
+            break;
+        case 'h':
+            print_help();
+            cleanup();
+            exit(0);
+        case 's':
+            print_usage();
+            cleanup();
+            exit(0);
+        case 'v':
+            print_version();
+            cleanup();
+            exit(0);
+        case 'V':
+            verbose = 1;
+            break;
+        case 'l':
+            if (mpz_set_str(low, optarg, 10) == -1) {
+                fprintf(stderr, "Error: Could not parse '%s' into a number.\n",
+                        optarg);
+                exit(1);
+            }
+            break;
+        case 'u':
+            if (mpz_set_str(high, optarg, 10) == -1) {
+                fprintf(stderr, "Error: Could not parse '%s' into a number.\n",
+                        optarg);
+                exit(1);
+            }
+            break;
+        case 'c':
+            if (mpz_set_str(arg_count, optarg, 10) == -1) {
+                fprintf(stderr, "Error: Could not parse '%s' into a number.\n",
+                        optarg);
+                exit(1);
+            }
+            if(mpz_fits_ulong_p(arg_count) == 0) {
+                fprintf(stderr, "Error: Count is too large.\nMax value for "
+                        "size of set is %lu.\n", ULONG_MAX);
+                exit(1);
+            }
+            size_of_set = mpz_get_ui(arg_count);
+            break;
+        case 'f':
+            if ( read_params_from_file(optarg) < 1 ) {
+                mpz_clear(arg_count);
+                cleanup();
+                exit(1);
+            }
+            break;
+        case 'r':
+            userandom = 1;
+        case '?':
+            break;
         }
     }
-
-    if (mpz_cmp(high, low) < 1) {
-        fprintf(stderr, "Error: invalid range, lower (%s) >= upper (%s).\n",
-                mpz_get_str(NULL, 10, low),
-                mpz_get_str(NULL, 10, high));
-        exit(1);
-    }
-
-    mpz_t argsz;
-    mpz_init(argsz);
     mpz_init(range);
     mpz_sub(range, high, low);
-    if (sz) {
-        if (mpz_set_str(argsz, sz, 10) == -1) {
-            fprintf(stderr, "Error: Could not parse '%s' into a number.\n",
-                    sz);
-            exit(1);
-        }
-        if (mpz_fits_ulong_p(argsz) == 0) {
-            fprintf(stderr, "Error: Size given is too large.\nMax value for "
-                    "size of set is %lu.\n", ULONG_MAX);
-            exit(1);
-        }
-        if (mpz_cmp(argsz, range) >= 0) {
-            fprintf(stderr, "Error: Size given (%s) exceeds range (%s).\n"
-                    "No unique random numbers can be generated.\n",
-                    mpz_get_str(NULL, 10, argsz),
-                    mpz_get_str(NULL, 10, range)
-                   );
-            exit(1);
-        }
-        size_of_set = mpz_get_ui(argsz);
+    if(mpz_cmp(arg_count, range) >= 0) {
+        fprintf(stderr, "Error: Size given (%s) exceeds range (%s).\n"
+                "No unique random numbers can be generated.\n",
+                mpz_get_str(NULL, 10, arg_count),
+                mpz_get_str(NULL, 10, range)
+               );
+        exit(1);
     }
-    mpz_clear(argsz);
-
-    if ( c < -1 ) {
-        fprintf(stderr, "%s: %s\n",
-                poptBadOption(optCon, POPT_BADOPTION_NOALIAS),
-                poptStrerror(c));
-        return 1;
-    }
-
-    poptFreeContext(optCon);
+    mpz_clear(arg_count);
     return 0;
 }
+
 
 int
 main(int argc, const char **argv)
 {
     mpz_init_set_str(low, "1", 10);
     mpz_init_set_str(high, "100", 10);
-    size_of_set = 1;
-
-    parseOptions(argc, argv);
+    parseOptions(argc, (char * const*)argv);
     initRandom();
     generateSeries(size_of_set, low, high);
-
-    mpz_clear(low);
-    mpz_clear(high);
-    mpz_clear(range);
     gmp_randclear(state);
+    cleanup();
     return 0;
 }
 

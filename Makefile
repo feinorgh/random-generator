@@ -1,6 +1,6 @@
 CC=gcc
 random : random.c
-	$(CC) $(CFLAGS) $? -o $@ -lgmp -lpopt -Wall -pedantic
+	$(CC) $(CFLAGS) $? -o $@ -lgmp -Wall
 
 .PHONY: clean
 clean :
