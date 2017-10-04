@@ -8,8 +8,8 @@ More specifically it means that it generates an ordered set of unique integers.
 
 It guarantees that no number occurs more than once.
 
-It makes use of the GMP Library (The GNU MP Bignum Library) for generating
-integers of any imaginable order,given the limitations on memory, processing
+It makes use of the GMP Library (The GNU Multiple Precision Arithmetic Library) for generating
+integers of any imaginable order, given the limitations on memory, processing
 power, the shell's ability to provide long enough arguments, the user's
 ability to type them et cetera.
 
