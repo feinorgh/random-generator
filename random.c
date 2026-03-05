@@ -93,6 +93,7 @@ clear_number(void *p)
 void
 treeaction(const void *nodep, const VISIT which, const int depth)
 {
+    (void)depth;
     mpz_t *datap;
     switch(which) {
     case preorder:
@@ -111,10 +112,9 @@ treeaction(const void *nodep, const VISIT which, const int depth)
 }
 
 void
-random_integer(mpz_t result, const mpz_t low, const mpz_t high)
+random_integer(mpz_t result, const mpz_t low)
 {
-    mpz_sub(range, high, low);
-    mpz_add_ui(range, range, 1);
+    /* range = high - low + 1 (inclusive count) is already set globally */
     mpz_urandomm(result, state, range);
     mpz_add(result, result, low);
 }
@@ -129,15 +129,19 @@ generate_series(size_t size_of_set, mpz_t low, mpz_t high)
 {
     char *suffix = "s";
     if (verbose) {
+        char *low_str = mpz_get_str(NULL, 10, low);
+        char *high_str = mpz_get_str(NULL, 10, high);
         if (size_of_set < 2) {
             suffix = "";
         }
         printf("Generating %zu number%s between %s and %s...\n",
                size_of_set,
                suffix,
-               mpz_get_str(NULL, 10, low),
-               mpz_get_str(NULL, 10, high)
+               low_str,
+               high_str
               );
+        free(low_str);
+        free(high_str);
     }
 
     mpz_t tmp;
@@ -153,28 +157,32 @@ generate_series(size_t size_of_set, mpz_t low, mpz_t high)
          * */
         mpz_sub_ui(tmp, range, size_of_set);
         size_t invsize = mpz_get_ui(tmp);
-        mpz_t *number = malloc(sizeof(mpz_t) * invsize);
+        mpz_t *number = NULL;
+        if (invsize > 0) {
+            number = malloc(sizeof(mpz_t) * invsize);
+            if (number == NULL) {
+                fprintf(stderr, "%s\n", strerror(errno));
+                exit(1);
+            }
+        }
         void *root = NULL;
         size_t i = 0;
         for ( i = 0; i < invsize; i++ ) {
             mpz_init(number[i]);
             do {
-                random_integer(number[i], low, high);
+                random_integer(number[i], low);
             } while (tfind((void *)number[i], &root, compare) != NULL);
             tsearch((void *)number[i], &root, compare);
         }
         mpz_set(tmp, low);
-        while (mpz_cmp(tmp, high)) {
+        while (mpz_cmp(tmp, high) <= 0) {
             if (tfind((void *)tmp, &root, compare) == NULL) {
-                /* printf("%s\n", mpz_get_str(NULL, 10, tmp)); */
                 gmp_printf("%Zd\n", tmp);
             }
             mpz_add_ui(tmp, tmp, 1);
         }
         tdestroy(root, clear_number);
-        if (number != NULL) {
-            free(number);
-        }
+        free(number);
     } else {
         mpz_t *number = malloc(sizeof(mpz_t) * size_of_set);
         if (number == NULL) {
@@ -186,16 +194,14 @@ generate_series(size_t size_of_set, mpz_t low, mpz_t high)
         for ( i = 0; i < size_of_set; i++ ) {
             mpz_init(number[i]);
             do {
-                random_integer(number[i], low, high);
+                random_integer(number[i], low);
             } while (tfind((void *)number[i], &root, compare) != NULL);
             tsearch((void *)number[i], &root, compare);
         }
 
         twalk(root, treeaction);
         tdestroy(root, clear_number);
-        if (number != NULL) {
-            free(number);
-        }
+        free(number);
     }
     mpz_clear(tmp);
 }
@@ -209,7 +215,11 @@ init_random(void)
     mpz_init(seed);
 
     size_t count = 256; /* We read this many bytes from /dev/urandom */
-    char *seedstart = malloc(count*sizeof(char*) + 1);
+    char *seedstart = malloc(count + 1);
+    if (seedstart == NULL) {
+        fprintf(stderr, "%s\n", strerror(errno));
+        exit(1);
+    }
 
     char *filename;
     if (userandom) {
@@ -219,9 +229,30 @@ init_random(void)
     }
 
     int devrandom = open(filename, O_RDONLY);
-    read(devrandom, seedstart, count);
+    if (devrandom < 0) {
+        fprintf(stderr, "%s: %s\n", filename, strerror(errno));
+        free(seedstart);
+        exit(1);
+    }
+    size_t total = 0;
+    while (total < count) {
+        ssize_t n = read(devrandom, seedstart + total, count - total);
+        if (n < 0) {
+            fprintf(stderr, "%s: %s\n", filename, strerror(errno));
+            free(seedstart);
+            close(devrandom);
+            exit(1);
+        }
+        if (n == 0) {
+            fprintf(stderr, "%s: unexpected end of file\n", filename);
+            free(seedstart);
+            close(devrandom);
+            exit(1);
+        }
+        total += (size_t)n;
+    }
     close(devrandom);
-    mpz_import(seed, 1, 1, 1, 0, 0, seedstart);
+    mpz_import(seed, count, 1, sizeof(char), 0, 0, seedstart);
     free(seedstart);
 
     gmp_randseed(state, seed);
@@ -345,13 +376,15 @@ parse_options(int argc, char * const argv[])
             break;
         case 'r':
             userandom = 1;
+            break;
         case '?':
             break;
         }
     }
-    mpz_init(range);
+    /* range = high - low + 1 (total count of integers in the inclusive range) */
     mpz_sub(range, high, low);
-    if(mpz_cmp(arg_count, range) >= 0) {
+    mpz_add_ui(range, range, 1);
+    if(mpz_cmp(arg_count, range) > 0) {
         fprintf(stderr, "Error: Size given (%s) exceeds range (%s).\n"
                 "No unique random numbers can be generated.\n",
                 mpz_get_str(NULL, 10, arg_count),
@@ -369,6 +402,7 @@ main(int argc, const char **argv)
 {
     mpz_init_set_str(low, "1", 10);
     mpz_init_set_str(high, "100", 10);
+    mpz_init(range);
     parse_options(argc, (char * const*)argv);
     init_random();
     generate_series(size_of_set, low, high);
