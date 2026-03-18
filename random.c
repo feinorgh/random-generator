@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have recieved a copy of the GNU General Public License
+ * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
@@ -63,8 +63,8 @@ print_usage() {
 void
 print_help() {
     char *help_string = "Usage: random [OPTION...]\n"
-                        "  -v, --verbose             Be verbose (shows debug info)\n"
-                        "  -V, --version             Show version and copyright information.\n"
+                        "  -V, --verbose             Be verbose (shows debug info)\n"
+                        "  -v, --version             Show version and copyright information.\n"
                         "  -l, --lower=<number>      Lower bound (inclusive). Default is 1.\n"
                         "  -u, --upper=<number>      Upper bound (inclusive). Default is 100.\n"
                         "  -c, --count=<number>      Generate this many unique numbers.\n"
